@@ -11,16 +11,6 @@ The build requires your own decrypted **Majora's Mask 3D USA v1.1** dump (`.3ds`
 - **Phone compilation verified in Termux:** the phone compiled and linked the full ARM64 game module from C++ translated on a PC. The Android app loaded that module from private storage and reached the title screen.
 - **Standalone installer in development:** the prototype imports a decrypted USA v1.1 dump, runs the bundled Python, Capstone, Clang and LLD, and shows progress, estimated time, and cancellation. ROM import and small C++ builds passed on device. The complete flow from ROM selection to gameplay within a single APK still needs to pass.
 
-## Build and install
-
-Build on Linux x86-64. On Bazzite, use an Ubuntu Distrobox for the build tools. You need Android SDK Platform 35, NDK r29, JDK 17, Gradle 8.13, CMake 3.30 or newer, Ninja, Python 3, and ADB.
-
-1. Prepare your own dump with the upstream [MM3D-PC Setup](https://github.com/Volpe34/MM3D-PC). Keep the installation directory and its `work/` subdirectory.
-2. Follow the [Android build guide](ports/android/MM3D.md) to compile the title and runtime for ARM64, package the debug APK, and copy the private game data to the phone.
-3. Launch the app. The guide uses the package ID `org.triaevum.android.mm3d` so the MM3D build can be installed alongside OoT3D Recomp.
-
-The build produces `ports/android/app/build/outputs/apk/debug/app-debug.apk`. Keep your dump, generated title module, APK containing that module, and staged data private.
-
 ## Reporting problems
 
 Include your phone model, Android version, GPU, the scene where the issue occurred, and what you were doing. The app writes `logs/native-stdout.log` and `logs/native-stderr.log` under its data directory. See the [Android build guide](ports/android/MM3D.md) for the ADB command to read them.
