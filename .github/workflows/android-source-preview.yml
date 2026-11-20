@@ -1,0 +1,43 @@
+name: Publish Android source preview
+
+on:
+  push:
+    branches: [android-mm3d]
+    paths: [.github/workflows/android-source-preview.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-source-preview
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'VictorGNW/MM3D-PC'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: android-v0.1.0-alpha.1
+      RELEASE_COMMIT: af0059fea719e1579a63faf9a8b7dcbf7b511a28
+    steps:
+      - name: Create the source pre-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists."
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG"             --target "$RELEASE_COMMIT"             --title "MM3D Android v0.1.0-alpha.1 (source preview)"             --prerelease --latest=false --notes-file - <<'NOTES'
+          First Android source preview of MM3D-PC for arm64-v8a.
+
+          - Gameplay reached on Motorola Edge 60 (Android 17, Mali-G615 MC2) using Vulkan 1.2.
+          - Fullscreen, touch controls with a layout editor, and a shortcut to skip the opening sequence.
+          - The touch overlay hides when a physical controller connects. This transition still needs testing with a real controller.
+          - The installer prototype imports a decrypted USA v1.1 dump and shows progress, ETA and cancellation. A full ROM-to-gameplay run using only the APK is still pending.
+
+          This preview contains source code only. See the [Android build guide](https://github.com/VictorGNW/MM3D-PC/blob/af0059fea719e1579a63faf9a8b7dcbf7b511a28/ports/android/MM3D.md) for the current PC build instructions.
+          NOTES
