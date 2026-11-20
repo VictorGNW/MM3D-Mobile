@@ -6,6 +6,8 @@ dependencies { testImplementation("junit:junit:4.13.2") }
 val sdlSource = providers.gradleProperty("triaevumSdlSource")
 val nativeStage = providers.gradleProperty("triaevumNativeStage")
 val applicationSuffix = providers.gradleProperty("triaevumApplicationIdSuffix")
+val allowMissingTitle = providers.gradleProperty("triaevumAllowMissingTitle").map(String::toBooleanStrict).orElse(false)
+val buildAssets = providers.gradleProperty("triaevumBuildAssets")
 android {
     namespace = "org.triaevum.android"
     compileSdk = 35
@@ -25,6 +27,7 @@ android {
     sourceSets.getByName("main") {
         if (sdlSource.isPresent) java.srcDir("${sdlSource.get()}/android-project/app/src/main/java")
         if (nativeStage.isPresent) jniLibs.srcDir(nativeStage.get())
+        if (buildAssets.isPresent) assets.srcDir(buildAssets.get())
     }
     packaging { jniLibs.useLegacyPackaging = true }
 }
@@ -33,7 +36,9 @@ tasks.register("checkNativeStage") {
         check(sdlSource.isPresent && nativeStage.isPresent) {
             "Supply -PtriaevumSdlSource and -PtriaevumNativeStage from the Android native build."
         }
-        for (name in listOf("SDL2", "TriAevum", "triaevum_title_bootstrap", "triaevum_title_aot", "c++_shared")) {
+        val libraries = listOf("SDL2", "TriAevum", "triaevum_title_bootstrap", "c++_shared")
+        val required = if (allowMissingTitle.get()) libraries else libraries + "triaevum_title_aot"
+        for (name in required) {
             check(file("${nativeStage.get()}/arm64-v8a/lib$name.so").isFile) { "Missing native library: $name" }
         }
     }

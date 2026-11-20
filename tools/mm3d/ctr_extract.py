@@ -52,7 +52,10 @@ def main(path, outdir=None):
     with open(os.path.join(outdir, 'romfs.bin'), 'wb') as o:
         left = rs * 0x200; hs = hashlib.sha256()
         while left:
-            chunk = f.read(min(left, 1 << 24)); o.write(chunk); hs.update(chunk); left -= len(chunk)
+            chunk = f.read(min(left, 1 << 24))
+            if not chunk:
+                raise ValueError("Incomplete NCCH RomFS")
+            o.write(chunk); hs.update(chunk); left -= len(chunk)
     print(f'romfs.bin {rs*0x200} sha256={hs.hexdigest()}')
     for nm, o in (('text', 0x10), ('ro', 0x20), ('data', 0x30)):
         a, p, s = struct.unpack_from('<III', exh, o); print(f'{nm}: addr={a:#x} size={s:#x}')

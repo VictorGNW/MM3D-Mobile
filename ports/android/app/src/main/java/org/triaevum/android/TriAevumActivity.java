@@ -39,6 +39,13 @@ public final class TriAevumActivity extends SDLActivity {
     }
 
     @Override protected String[] getArguments() {
+        File local = Mm3dLocalBuild.readyData(this);
+        if (local != null) {
+            return new String[] {
+                "--launch-profile", new File(local, Mm3dLocalBuild.PROFILE).getAbsolutePath(),
+                "--title-plugin", new File(local, Mm3dLocalBuild.MODULE).getAbsolutePath()
+            };
+        }
         File root = getExternalFilesDir(null);
         return new String[] {
             "--launch-profile", new File(root, "TriAevum.android.launch.json").getAbsolutePath(),
