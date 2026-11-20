@@ -48,7 +48,8 @@ final class Mm3dLocalBuild {
         }
     }
 
-    static void run(Context context, File rom, Consumer<String> progress) throws IOException, InterruptedException {
+    static boolean run(Context context, File rom, Path cancel, Consumer<String> progress)
+            throws IOException, InterruptedException {
         File nativeDir = new File(context.getApplicationInfo().nativeLibraryDir);
         File apk = new File(context.getApplicationInfo().sourceDir);
         String bundleId = String.format(Locale.ROOT, "%d-%d", apk.lastModified(), apk.length());
@@ -67,10 +68,12 @@ final class Mm3dLocalBuild {
                         Files.createDirectories(path.getParent());
                         Files.copy(archive, path, StandardCopyOption.REPLACE_EXISTING);
                     }
+                    if (Files.exists(cancel)) return false;
                 }
             }
             Files.write(complete, bundleId.getBytes(StandardCharsets.US_ASCII));
         }
+        if (Files.exists(cancel)) return false;
 
         ProcessBuilder build = new ProcessBuilder(
             new File(nativeDir, "libmm3d_python.so").getAbsolutePath(),
@@ -79,6 +82,7 @@ final class Mm3dLocalBuild {
             "--workspace", workspace(context).getAbsolutePath(),
             "--json-include", bundle.resolve("include").toString(),
             "--bundle-id", bundleId,
+            "--cancel-file", cancel.toString(),
             "--cxx", new File(nativeDir, "libmm3d_clang.so").getAbsolutePath(),
             "--cxx-arg=--driver-mode=g++",
             "--cxx-arg=--target=aarch64-linux-android29",
@@ -88,6 +92,8 @@ final class Mm3dLocalBuild {
         build.environment().put("PYTHONHOME", bundle.resolve("python").toString());
         build.environment().put("PYTHONUNBUFFERED", "1");
         build.environment().put("LD_LIBRARY_PATH", nativeDir.getAbsolutePath());
+        build.environment().put("LIBCAPSTONE_PATH", nativeDir.getAbsolutePath());
+        build.environment().put("TMPDIR", context.getCacheDir().getAbsolutePath());
         Path log = context.getFilesDir().toPath().resolve("mm3d-build.log");
         Process process = build.redirectErrorStream(true).start();
         try (BufferedReader lines = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
@@ -99,9 +105,11 @@ final class Mm3dLocalBuild {
                 if (line.startsWith("== ") || line.startsWith("[")) progress.accept(line);
             }
             int result = process.waitFor();
+            if (result == 130 && Files.exists(cancel)) return false;
             if (result != 0 || readyData(context) == null) {
                 throw new IOException("Build failed (exit " + result + "). See mm3d-build.log.");
             }
+            return true;
         } finally {
             if (process.isAlive()) process.destroy();
         }

@@ -276,7 +276,7 @@ def known_selection(program_path: Path) -> dict | None:
     return selection if actual == expected else None
 
 
-def translate(work: Path, game: Path) -> None:
+def translate(work: Path, game: Path, run=run) -> None:
     python = sys.executable
     env = dict(os.environ, MM3D_WORK=str(work))
     for attempt in range(1, 5):

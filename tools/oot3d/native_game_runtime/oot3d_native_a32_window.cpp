@@ -99,6 +99,10 @@
 #include "ship/controller/physicaldevice/GlobalSDLDeviceSettings.h"
 #include "ship/window/gui/Gui.h"
 
+#ifdef __ANDROID__
+#include "android_host.h"
+#endif
+
 #include <SDL2/SDL.h>
 #include <imgui.h>
 
@@ -5289,6 +5293,13 @@ void RunOot3dNativeA32Window(const Oot3dNativeGameLaunch &launch) {
   // HUD parts last applied: 0 HUD, 1 HUD with minimap, 2 none (cutscene),
   // 3 the title's start prompt, 4 rupees only (talking).
   int mm3dAppliedHud = -1;
+#ifdef __ANDROID__
+  const bool androidMm3dTouch = foreignTitle && manifest->Title.Id == "mm3d";
+  bool androidTouchSettingsVisible = false;
+  bool androidTouchTitleScreen = false;
+  bool androidTouchLastTitleScreen = false;
+  if (androidMm3dTouch) UpdateAndroidTouchControls(true, false, false);
+#endif
   // The give-an-item menu (MenuItemPresen, touch only on the 3DS): a host
   // cursor over its cells (5 x 4 items and the trade-item column) moved with
   // the D-pad / circle pad; A taps the cell.
@@ -6286,6 +6297,9 @@ void RunOot3dNativeA32Window(const Oot3dNativeGameLaunch &launch) {
             shownLowerLayouts = shown.Lower;
           }
         }
+#ifdef __ANDROID__
+        androidTouchTitleScreen = titleShown;
+#endif
         // Gameplay HUD: hidden while Link is held in a cutscene (frozen, dead,
         // time stopped: MM's Player_InBlockingCsMode flags), and the minimap
         // only where the lower screen shows an area map (a 512x1024 map sheet;
@@ -6708,6 +6722,56 @@ void RunOot3dNativeA32Window(const Oot3dNativeGameLaunch &launch) {
         physicalInputFrame.TitleActions = 0U;
       }
     }
+#ifdef __ANDROID__
+    if (androidMm3dTouch) {
+      const auto settings = gui->GetGuiWindow("OOT3D Graphics");
+      bool settingsVisible = settings != nullptr && settings->IsVisible();
+      const auto touch = SampleAndroidTouchInput(guestRefreshesDue != 0U,
+                                                 hostGuiVisible || settingsVisible);
+      if (settings != nullptr && (touch.Buttons & AndroidTouchMenu) != 0U) {
+        if (settingsVisible) {
+          settings->Hide();
+        } else {
+          settings->Show();
+          ImGui::SetWindowFocus("OOT3D Graphics");
+        }
+        settingsVisible = !settingsVisible;
+      }
+      if (settingsVisible != androidTouchSettingsVisible ||
+          androidTouchTitleScreen != androidTouchLastTitleScreen) {
+        androidTouchSettingsVisible = settingsVisible;
+        androidTouchLastTitleScreen = androidTouchTitleScreen;
+        UpdateAndroidTouchControls(true, settingsVisible, androidTouchTitleScreen);
+      }
+      if (!settingsVisible && !hostGuiVisible) {
+        using namespace ThreeDsRecomp::Input;
+        physicalInputFrame.Hid.Buttons |= touch.Buttons & (kStandardHidButtonMask | kExtraHidButtonMask);
+        if (androidTouchTitleScreen && (touch.Buttons & AndroidTouchSkipIntro) != 0U) {
+          physicalInputFrame.Hid.Buttons |= Oot3dNativeGame::NativeA32HidButtonMask(
+              Oot3dNativeGame::NativeA32HidButton::Start);
+        }
+        if (touch.LeftX != 0.0F || touch.LeftY != 0.0F) {
+          physicalInputFrame.Hid.CirclePadX = static_cast<int16_t>(std::lround(touch.LeftX * kNativeStickMaximum));
+          physicalInputFrame.Hid.CirclePadY = static_cast<int16_t>(std::lround(touch.LeftY * kNativeStickMaximum));
+        }
+        if (touch.RightX != 0.0F || touch.RightY != 0.0F) {
+          physicalInputFrame.CStick = {
+              static_cast<int16_t>(std::lround(touch.RightX * kNativeStickMaximum)),
+              static_cast<int16_t>(std::lround(touch.RightY * kNativeStickMaximum)),
+              AxisInputKind::Absolute};
+        }
+        using Oot3dNativeGame::NativeControlAction;
+        using Oot3dNativeGame::kFirstNativeTitleAction;
+        if ((touch.Buttons & AndroidTouchNotebook) != 0U) {
+          physicalInputFrame.TitleActions |=
+              1U << (static_cast<unsigned>(NativeControlAction::Notebook) -
+                     static_cast<unsigned>(kFirstNativeTitleAction));
+        }
+        if ((touch.Buttons & AndroidTouchMap) != 0U) physicalInputFrame.TitleActions |= 1U << 9U;
+        if ((touch.Buttons & AndroidTouchItems) != 0U) physicalInputFrame.TitleActions |= 1U << 10U;
+      }
+    }
+#endif
     if (!inputTimeline.Enabled()) {
       const uint32_t start = Oot3dNativeGame::NativeA32HidButtonMask(
           Oot3dNativeGame::NativeA32HidButton::Start);

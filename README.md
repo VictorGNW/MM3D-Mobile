@@ -9,7 +9,7 @@ The build requires your own decrypted **Majora's Mask 3D USA v1.1** dump (`.3ds`
 - Tested on a **Motorola Edge 60 with Android 17 and a Mali-G615 MC2**. The debug APK ran through the scene that had frozen at the Happy Mask Salesman and continued rendering the intro in Clock Town.
 - The phone's driver supports Vulkan 1.3. The game runtime used Vulkan 1.2 through NRI on this device. Compatibility on other devices is still unverified.
 - The current build runs on Android and is cross-compiled on a Linux PC. Building the entire project on the phone has not been validated.
-- The touch controls are not wired into the game. Use a Bluetooth or USB gamepad for input testing. Full gameplay, saving, and performance across scenes still need testing.
+- The Android touch overlay provides game controls and a layout editor. It hides while a physical Bluetooth or USB controller is connected. Full gameplay, saving, and performance across scenes still need testing.
 
 ## Build and install
 

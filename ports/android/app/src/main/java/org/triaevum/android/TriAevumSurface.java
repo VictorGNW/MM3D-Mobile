@@ -1,6 +1,7 @@
 package org.triaevum.android;
 
 import android.content.Context;
+import android.graphics.Region;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import org.libsdl.app.SDLSurface;
 /** SDL retains lifecycle/input ownership; only the Android buffer extent is constrained. */
 final class TriAevumSurface extends SDLSurface {
     private final int maximumShortEdge;
+    private boolean touchOverlayVisible;
 
     TriAevumSurface(Context context, int maximumShortEdge) {
         super(context);
@@ -16,6 +18,21 @@ final class TriAevumSurface extends SDLSurface {
         // A fixed buffer must not become the view's desired layout size on rotation.
         setLayoutParams(new ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+
+    void setTouchOverlayVisible(boolean visible) {
+        if (touchOverlayVisible != visible) {
+            touchOverlayVisible = visible;
+            requestLayout();
+        }
+    }
+
+    @Override public boolean gatherTransparentRegion(Region region) {
+        if (!touchOverlayVisible) return super.gatherTransparentRegion(region);
+        // The game surface fills the window, but the Android window still
+        // contributes touch controls above it. Keep that layer composited.
+        if (region != null) region.setEmpty();
+        return false;
     }
 
     @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {

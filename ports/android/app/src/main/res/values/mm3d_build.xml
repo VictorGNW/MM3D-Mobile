@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mm3d_compile_progress">Compiling C++: %1$d of %2$d files</string>
+    <string name="mm3d_build_estimate">Estimated progress: %1$d%% · About %2$d min remaining</string>
+</resources>
