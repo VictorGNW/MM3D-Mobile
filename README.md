@@ -6,10 +6,10 @@ The build requires your own decrypted **Majora's Mask 3D USA v1.1** dump (`.3ds`
 
 ## Current status
 
-- Tested on a **Motorola Edge 60 with Android 17 and a Mali-G615 MC2**. The debug APK ran through the scene that had frozen at the Happy Mask Salesman and continued rendering the intro in Clock Town.
-- The phone's driver supports Vulkan 1.3. The game runtime used Vulkan 1.2 through NRI on this device. Compatibility on other devices is still unverified.
-- The current build runs on Android and is cross-compiled on a Linux PC. Building the entire project on the phone has not been validated.
-- The Android touch overlay provides game controls and a layout editor. It hides while a physical Bluetooth or USB controller is connected. Full gameplay, saving, and performance across scenes still need testing.
+- **Gameplay reached** on a Motorola Edge 60 with Android 17 and a Mali-G615 MC2. Frame pacing was reported stable during a short gameplay test. The driver supports Vulkan 1.3, and the NRI runtime used Vulkan 1.2. Other devices, longer play sessions, and saving still need testing.
+- **Android controls:** the touch overlay includes a layout editor, fullscreen mode, and a skip button for the opening sequence. The overlay is configured to hide when a physical gamepad connects and return when the last one disconnects. That transition still needs a test with a real controller.
+- **Phone compilation verified in Termux:** the phone compiled and linked the full ARM64 game module from C++ translated on a PC. The Android app loaded that module from private storage and reached the title screen.
+- **Standalone installer in development:** the prototype imports a decrypted USA v1.1 dump, runs the bundled Python, Capstone, Clang and LLD, and shows progress, estimated time, and cancellation. ROM import and small C++ builds passed on device. The complete flow from ROM selection to gameplay within a single APK still needs to pass.
 
 ## Build and install
 
